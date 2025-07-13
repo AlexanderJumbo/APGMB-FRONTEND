@@ -1,0 +1,390 @@
+<div class="p-6">
+  <!-- Título y botón agregar -->
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-2xl font-semibold text-gray-800">Gestión de Usuarios</h2>
+    <button
+      (click)="abrirModalAgregar()"
+      class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-5 h-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 4v16m8-8H4"
+        />
+      </svg>
+      Agregar Usuario
+    </button>
+  </div>
+
+  <!-- Toast con ícono animado -->
+  <div
+    *ngIf="mostrarToast()"
+    [ngClass]="{
+      'bg-green-500': !toastEsError(),
+      'bg-red-500': toastEsError()
+    }"
+    class="fixed top-4 right-4 text-white px-4 py-2 rounded shadow-lg z-50 flex items-center gap-2"
+    role="alert"
+  >
+    <svg
+      class="w-5 h-5 animate-bounce"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        [attr.d]="toastEsError() ? 'M6 18L18 6M6 6l12 12' : 'M5 13l4 4L19 7'"
+      />
+    </svg>
+    {{ toastMensaje() }}
+  </div>
+
+  <!-- Tabla de usuarios -->
+  <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <table class="w-full text-sm text-left text-gray-500">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+        <tr>
+          <th class="px-6 py-3">#</th>
+          <th class="px-6 py-3">Nombre</th>
+          <th class="px-6 py-3">Apellido</th>
+          <th class="px-6 py-3">DNI</th>
+          <th class="px-6 py-3">Teléfono</th>
+          <th class="px-6 py-3">Dirección</th>
+          <th class="px-6 py-3">Rol</th>
+          <th class="px-6 py-3 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let usuario of usuarios(); let i = index; trackBy: trackById"
+          class="bg-white border-b hover:bg-gray-50"
+        >
+          <td class="px-6 py-4">{{ i + 1 }}</td>
+          <td class="px-6 py-4">{{ usuario.name }}</td>
+          <td class="px-6 py-4">{{ usuario.lastname }}</td>
+          <td class="px-6 py-4">{{ usuario.dni }}</td>
+          <td class="px-6 py-4">{{ usuario.numberPhone }}</td>
+          <td class="px-6 py-4">{{ usuario.address }}</td>
+          <td class="px-6 py-4">
+            {{
+              usuario.role === "ADMINISTRATOR"
+                ? "Administrador"
+                : "Operador de Campo"
+            }}
+          </td>
+
+          <td class="px-6 py-4 text-center relative">
+            <button
+              (click)="toggleMenu(usuario.userName)"
+              class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              [attr.aria-expanded]="menuAbierto() === usuario.userName"
+              [attr.aria-haspopup]="true"
+              [attr.aria-label]="'Acciones para ' + usuario.name"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="5" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="19" r="1.5" />
+              </svg>
+            </button>
+            <div
+              *ngIf="menuAbierto() === usuario.userName"
+              class="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded-md z-10"
+              role="menu"
+            >
+              <button
+                (click)="abrirModalEditar(usuario)"
+                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                role="menuitem"
+              >
+                ✏️ Editar
+              </button>
+              <button
+                (click)="confirmarEliminar(usuario)"
+                class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
+                role="menuitem"
+              >
+                🗑️ Eliminar
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="usuarios().length === 0">
+          <td colspan="7" class="text-center text-gray-500 py-4 italic">
+            No hay usuarios registrados.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal agregar o editar -->
+  <div
+    *ngIf="mostrarModalAgregar() || mostrarModalEditar()"
+    class="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="titulo-modal-usuario"
+    (click)="cerrarModal()"
+  >
+    <div
+      class="bg-white w-full max-w-2xl p-6 rounded-lg shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 id="titulo-modal-usuario" class="text-xl font-semibold mb-4">
+        {{ mostrarModalAgregar() ? "Agregar Usuario" : "Editar Usuario" }}
+      </h3>
+      <form
+        [formGroup]="form"
+        (ngSubmit)="
+          mostrarModalAgregar() ? crearUsuario() : actualizarUsuario()
+        "
+        class="grid grid-cols-1 md:grid-cols-2 gap-4"
+      >
+        <!-- Nombres -->
+        <div>
+          <label class="block mb-1 text-sm font-medium text-gray-700"
+            >Nombres</label
+          >
+          <input
+            formControlName="firstname"
+            type="text"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <small
+            *ngIf="hasErrors('firstname', 'required')"
+            class="text-red-600"
+          >
+            El nombre es obligatorio.
+          </small>
+        </div>
+
+        <!-- Apellidos -->
+        <div>
+          <label class="block mb-1 text-sm font-medium text-gray-700"
+            >Apellidos</label
+          >
+          <input
+            formControlName="lastname"
+            type="text"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <small *ngIf="hasErrors('lastname', 'required')" class="text-red-600">
+            El apellido es obligatorio.
+          </small>
+        </div>
+
+        <!-- DNI -->
+        <div>
+          <label class="block mb-1 text-sm font-medium text-gray-700"
+            >DNI</label
+          >
+          <input
+            formControlName="dni"
+            type="text"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <small *ngIf="hasErrors('dni', 'pattern')" class="text-red-600">
+            El DNI debe contener solo números.
+          </small>
+          <small
+            *ngIf="
+              hasErrors('dni', 'minlength') || hasErrors('dni', 'maxlength')
+            "
+            class="text-red-600"
+          >
+            El DNI debe tener exactamente 10 dígitos.
+          </small>
+        </div>
+
+        <!-- Teléfono -->
+        <div>
+          <label class="block mb-1 text-sm font-medium text-gray-700"
+            >Teléfono</label
+          >
+          <input
+            formControlName="numberPhone"
+            type="text"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <small
+            *ngIf="hasErrors('numberPhone', 'pattern')"
+            class="text-red-600"
+          >
+            El teléfono debe contener solo números.
+          </small>
+          <small
+            *ngIf="
+              hasErrors('numberPhone', 'minlength') ||
+              hasErrors('numberPhone', 'maxlength')
+            "
+            class="text-red-600"
+          >
+            Debe tener entre 9 y 10 dígitos.
+          </small>
+        </div>
+
+        <!-- Dirección -->
+        <div class="md:col-span-2">
+          <label class="block mb-1 text-sm font-medium text-gray-700"
+            >Dirección</label
+          >
+          <input
+            formControlName="address"
+            type="text"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <!-- Usuario -->
+        <div>
+          <label class="block mb-1 text-sm font-medium text-gray-700"
+            >Usuario</label
+          >
+          <input
+            formControlName="username"
+            type="text"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <small *ngIf="hasErrors('username', 'required')" class="text-red-600">
+            El nombre de usuario es obligatorio.
+          </small>
+        </div>
+
+        <!-- Rol -->
+        <div>
+          <label class="block mb-1 text-sm font-medium text-gray-700"
+            >Rol</label
+          >
+          <select
+            formControlName="role"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Seleccionar rol</option>
+            <option value="ADMINISTRATOR">Administrador</option>
+            <option value="OPERATIONAL">Operador de Campo</option>
+          </select>
+          <small *ngIf="hasErrors('role', 'required')" class="text-red-600">
+            Debe seleccionar un rol.
+          </small>
+        </div>
+
+        <!-- Contraseña -->
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700"
+            >Contraseña</label
+          >
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            class="mt-1 block w-full border rounded-md p-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Ingrese la contraseña"
+          />
+          <small *ngIf="mostrarModalEditar()" class="text-yellow-600">
+            Dejar vacío si no desea cambiar la contraseña.
+          </small>
+          <small
+            *ngIf="hasErrors('password', 'minlength')"
+            class="text-red-600"
+          >
+            Debe tener al menos 4 caracteres.
+          </small>
+        </div>
+
+        <!-- Repetir Contraseña -->
+        <div>
+          <label
+            for="repeated_password"
+            class="block text-sm font-medium text-gray-700"
+            >Repetir Contraseña</label
+          >
+          <input
+            type="password"
+            id="repeated_password"
+            formControlName="repeated_password"
+            class="mt-1 block w-full border rounded-md p-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Repita la contraseña"
+          />
+          <small *ngIf="mostrarModalEditar()" class="text-yellow-600">
+            Debe repetir la contraseña si desea modificarla.
+          </small>
+          <small *ngIf="passwordsDoNotMatch()" class="text-red-600">
+            Las contraseñas no coinciden.
+          </small>
+        </div>
+
+        <!-- Botones -->
+        <div class="md:col-span-2 flex justify-between mt-4">
+          <button
+            type="button"
+            (click)="cerrarModal()"
+            class="px-4 py-2 border rounded-md text-yellow-600 border-yellow-400 hover:bg-yellow-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="!isFormValidToSubmit"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          >
+            {{ mostrarModalAgregar() ? "Registrar" : "Actualizar" }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal eliminar -->
+  <div
+    *ngIf="mostrarModalEliminar()"
+    class="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="titulo-modal-eliminar"
+    (click)="cerrarModal()"
+  >
+    <div
+      class="bg-white w-full max-w-md p-6 rounded shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 class="text-lg font-semibold mb-4 text-center">
+        ¿Eliminar este usuario?
+      </h3>
+      <p class="text-center text-gray-600 mb-4">
+        Esta acción no se puede deshacer.
+      </p>
+      <div class="flex justify-between">
+        <button
+          (click)="cerrarModal()"
+          class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+        >
+          Cancelar
+        </button>
+        <button
+          (click)="eliminarUsuario()"
+          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

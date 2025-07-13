@@ -1,0 +1,38 @@
+<nav
+  [ngClass]="{
+    'shadow-sm': navHasShadow,
+    'shadow-none': !navHasShadow
+  }"
+  class="fixed top-0 left-0 right-0 z-40 h-20 px-6 bg-white/80 backdrop-blur-xl flex items-center justify-between transition-all duration-300 ease-in-out"
+>
+  <!-- Botón ☰ visible solo cuando el sidebar está cerrado -->
+  <button
+    *ngIf="!isSidebarOpen()"
+    (click)="toggleSidebar()"
+    class="p-2 rounded-md hover:bg-gray-200 transition"
+    title="Mostrar menú"
+  >
+    <lucide-icon [img]="Menu" class="w-6 h-6"></lucide-icon>
+  </button>
+
+  <!-- Solo logo -->
+  <div class="flex items-center">
+    <img
+      src="logo-municipio-balao.png"
+      alt="Logo Municipio de Balao"
+      class="h-25 w-auto object-contain"
+    />
+  </div>
+
+  <!-- Solo botón salir -->
+  <div class="flex items-center gap-4">
+    <button
+      class="flex items-center gap-2 px-4 py-2 bg-rose-100 text-rose-700 rounded-xl hover:bg-rose-200 transition-all shadow-sm"
+      title="Cerrar sesión"
+      (click)="logout()"
+    >
+      <lucide-icon [img]="LogOut" class="w-4 h-4"></lucide-icon>
+      <span class="text-sm font-medium">Salir</span>
+    </button>
+  </div>
+</nav>

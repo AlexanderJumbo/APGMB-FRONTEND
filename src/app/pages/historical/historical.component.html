@@ -1,0 +1,165 @@
+<div class="p-6 space-y-6">
+  <!-- Título y Filtros -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <h2 class="text-2xl font-semibold text-gray-800">Historial de Lecturas</h2>
+
+    <div class="flex flex-wrap gap-4">
+      <!-- Fecha inicio -->
+      <div class="flex flex-col">
+        <label for="fechaInicio" class="text-sm font-medium text-gray-700"
+          >Desde</label
+        >
+        <input
+          type="date"
+          id="fechaInicio"
+          [value]="fechaInicio() || ''"
+          (change)="setFechaInicio($event)"
+          class="border border-gray-300 rounded-md p-2"
+        />
+      </div>
+
+      <!-- Fecha fin -->
+      <div class="flex flex-col">
+        <label for="fechaFin" class="text-sm font-medium text-gray-700"
+          >Hasta</label
+        >
+        <input
+          type="date"
+          id="fechaFin"
+          [value]="fechaFin() || ''"
+          (change)="setFechaFin($event)"
+          class="border border-gray-300 rounded-md p-2"
+        />
+      </div>
+      <div class="flex flex-col">
+        <label for="usuarioNombre" class="text-sm font-medium text-gray-700">
+          Cliente
+        </label>
+        <input
+          type="text"
+          id="usuarioNombre"
+          [value]="usuarioNombre()"
+          (input)="setUsuarioNombre($event)"
+          placeholder="Buscar por nombre"
+          class="border border-gray-300 rounded-md p-2"
+        />
+      </div>
+
+      <!-- Botón aplicar -->
+      <div class="flex items-end">
+        <button
+          (click)="aplicarFiltros()"
+          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+        >
+          Aplicar Filtros
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selector de cantidad de registros por página -->
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="text-sm font-medium text-gray-700">Mostrar:</span>
+    <button
+      *ngFor="let option of opcionesElementosPorPagina"
+      (click)="setElementosPorPagina(option)"
+      [ngClass]="
+        elementosPorPagina() === option
+          ? 'bg-indigo-600 text-white'
+          : 'bg-white text-indigo-600 border border-indigo-600 hover:bg-indigo-600 hover:text-white'
+      "
+      class="px-3 py-1 text-sm rounded-full transition"
+    >
+      {{ option }}
+    </button>
+    <span class="text-sm text-gray-600">registros por página</span>
+  </div>
+
+  <!-- Tabla -->
+  <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <table class="w-full text-sm text-left text-gray-700 bg-white" role="table">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+        <tr>
+          <th class="px-6 py-3">#</th>
+          <th class="px-6 py-3">Fecha</th>
+          <th class="px-6 py-3">Cliente</th>
+          <th class="px-6 py-3">Numero Medidor</th>
+          <th class="px-6 py-3">Sector</th>
+          <th class="px-6 py-3">Lectura Anterior</th>
+          <th class="px-6 py-3">Lectura Actual</th>
+          <th class="px-6 py-3">Total Consumo</th>
+          <th class="px-6 py-3">Observación</th>
+          <th class="px-6 py-3">Operador</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let lectura of lecturas(); let i = index; trackBy: trackById"
+          class="border-b hover:bg-gray-50"
+        >
+          <td class="px-6 py-4 font-medium text-gray-900">{{ i + 1 }}</td>
+          <!-- <td class="px-6 py-4 whitespace-nowrap"></td> -->
+          <td class="px-6 py-4 whitespace-nowrap">
+            {{ lectura.dateLecture | date : "dd MMM yyyy" : "" : "es-ES" }}
+          </td>
+          <td class="px-6 py-4">{{ lectura.accountUser }}</td>
+          <td class="px-6 py-4">{{ lectura.accountMeter }}</td>
+          <td class="px-6 py-4">{{ lectura.nameSector }}</td>
+          <td class="px-6 py-4">{{ lectura.prevLecture }}</td>
+          <td class="px-6 py-4">{{ lectura.currentLecture }}</td>
+          <td class="px-6 py-4">{{ lectura.totalConsumption }}</td>
+          <td class="px-6 py-4 italic text-gray-600">
+            {{ lectura.observation || "---" }}
+          </td>
+          <td class="px-6 py-4">{{ lectura.operatorName || "---" }}</td>
+        </tr>
+        <tr *ngIf="lecturas().length === 0">
+          <td colspan="9" class="px-6 py-4 text-center text-gray-500">
+            No se encontraron registros en este rango de fechas.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  <div class="flex justify-center mt-6" *ngIf="totalPaginas() > 1">
+    <div class="flex space-x-1">
+      <!-- Prev -->
+      <button
+        (click)="paginaActual() > 0 && cambiarPagina(paginaActual() - 1)"
+        [disabled]="paginaActual() === 0"
+        class="rounded-full border border-indigo-600 py-2 px-3 text-sm text-indigo-600 hover:text-white hover:bg-indigo-600 focus:bg-indigo-600 focus:text-white active:bg-indigo-600 active:text-white disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-lg"
+      >
+        Prev
+      </button>
+
+      <!-- Números -->
+      <ng-container *ngFor="let pagina of totalPaginasArray(); let i = index">
+        <button
+          (click)="cambiarPagina(i)"
+          class="min-w-9 rounded-full py-2 px-3.5 text-sm border transition-all shadow-md ml-1"
+          [ngClass]="
+            i === paginaActual()
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white'
+          "
+        >
+          {{ i + 1 }}
+        </button>
+      </ng-container>
+
+      <!-- Next -->
+      <button
+        (click)="
+          paginaActual() < totalPaginas() - 1 &&
+            cambiarPagina(paginaActual() + 1)
+        "
+        [disabled]="paginaActual() >= totalPaginas() - 1"
+        class="rounded-full border border-indigo-600 py-2 px-3 text-sm text-indigo-600 hover:text-white hover:bg-indigo-600 focus:bg-indigo-600 focus:text-white active:bg-indigo-600 active:text-white disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-lg ml-1"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>

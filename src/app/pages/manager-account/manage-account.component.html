@@ -1,0 +1,492 @@
+<div class="p-6">
+  <!-- Título y botón agregar -->
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-2xl font-semibold text-gray-800">Gestión de Cuentas</h2>
+    <button
+      type="button"
+      (click)="abrirModalAgregar()"
+      aria-label="Agregar nueva cuenta"
+      class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-700"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-5 h-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 4v16m8-8H4"
+        />
+      </svg>
+      Agregar Cuenta
+    </button>
+  </div>
+
+  <!-- Toast -->
+  <div
+    *ngIf="mostrarToast()"
+    class="fixed top-4 right-4 px-4 py-2 rounded shadow-lg z-50 flex items-center gap-2"
+    [ngClass]="{
+      'bg-green-500 text-white': !toastEsError(),
+      'bg-red-500 text-white': toastEsError()
+    }"
+    role="alert"
+    aria-live="assertive"
+  >
+    <ng-container *ngIf="!toastEsError(); else errorIcon">
+      <svg
+        class="w-5 h-5 animate-bounce"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M5 13l4 4L19 7"
+        />
+      </svg>
+    </ng-container>
+    <ng-template #errorIcon>
+      <svg
+        class="w-5 h-5 animate-pulse"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    </ng-template>
+    {{ toastMensaje() }}
+  </div>
+  <div
+    class="flex flex-col md:flex-row md:items-center md:gap-6 mb-4"
+    role="search"
+    aria-label="Filtros de cuentas"
+  >
+    <!-- filtro sector -->
+    <div
+      class="flex flex-col md:flex-row md:items-center md:gap-2 mb-4 md:mb-0"
+    >
+      <label for="sectorFilter" class="text-sm font-medium mr-2"
+        >Filtrar por sector</label
+      >
+      <select
+        id="sectorFilter"
+        class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+        [value]="filtroSector()"
+        (change)="onSectorChange($event)"
+        aria-controls="tablaCuentas"
+      >
+        <option value="">Todos los sectores</option>
+        <option *ngFor="let sector of sectores()" [value]="sector.nameSector">
+          {{ sector.nameSector }}
+        </option>
+      </select>
+    </div>
+
+    <!-- filtro estado -->
+    <div class="flex flex-col md:flex-row md:items-center md:gap-2">
+      <label for="estadoFilter" class="text-sm font-medium mr-2"
+        >Filtrar por estado</label
+      >
+      <select
+        id="estadoFilter"
+        class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+        [value]="
+          filtroActivo() === null ? '' : filtroActivo() ? 'true' : 'false'
+        "
+        (change)="onEstadoChange($event)"
+        aria-controls="tablaCuentas"
+      >
+        <option value="">Todos</option>
+        <option value="true">Activados</option>
+        <option value="false">Desactivados</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Tabla de cuentas -->
+  <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <table class="w-full text-sm text-left text-gray-500" role="table">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+        <tr>
+          <th class="px-6 py-3">#</th>
+          <th class="px-6 py-3">ID Cuenta</th>
+          <th class="px-6 py-3">Nombre</th>
+          <th class="px-6 py-3">Apellido</th>
+          <th class="px-6 py-3">DNI</th>
+          <th class="px-6 py-3">Correo</th>
+          <th class="px-6 py-3">Teléfono</th>
+          <th class="px-6 py-3">Dirección</th>
+          <th class="px-6 py-3">Sector</th>
+          <th class="px-6 py-3">N° Medidor</th>
+          <th class="px-6 py-3">Marca del Medidor</th>
+          <th class="px-6 py-3">Código Predial</th>
+          <th class="px-6 py-3">Fecha Registro</th>
+          <th class="px-6 py-3">Estado</th>
+          <th class="px-6 py-3 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let cuenta of cuentas(); let i = index; trackBy: trackById"
+          class="border-b hover:bg-gray-50"
+          [ngClass]="cuenta.active ? 'bg-white' : 'bg-red-50'"
+        >
+          <td class="px-6 py-4">{{ i + 1 }}</td>
+          <td class="px-6 py-4">{{ cuenta.accountId }}</td>
+          <td class="px-6 py-4">{{ cuenta.name }}</td>
+          <td class="px-6 py-4">{{ cuenta.lastname }}</td>
+          <td class="px-6 py-4">{{ cuenta.dni }}</td>
+          <td class="px-6 py-4">{{ cuenta.email }}</td>
+          <td class="px-6 py-4">{{ cuenta.phone }}</td>
+          <td class="px-6 py-4">{{ cuenta.address }}</td>
+          <td class="px-6 py-4">{{ cuenta.nameSector || "---" }}</td>
+          <td class="px-6 py-4">{{ cuenta.meterNumber }}</td>
+          <td class="px-6 py-4">{{ cuenta.meterMark }}</td>
+          <td class="px-6 py-4">{{ cuenta.predialCode || "---" }}</td>
+          <td class="px-6 py-4">
+            {{
+              cuenta.dateRegister
+                ? (cuenta.dateRegister | date : "shortDate")
+                : "---"
+            }}
+          </td>
+          <td class="px-6 py-4">
+            <span
+              class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-medium"
+              [ngClass]="
+                cuenta.active
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+              "
+            >
+              <svg
+                *ngIf="cuenta.active"
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <svg
+                *ngIf="!cuenta.active"
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              {{ cuenta.active ? "Activado" : "Desactivado" }}
+            </span>
+          </td>
+          <!-- Acciones -->
+          <td class="px-6 py-4 text-center relative">
+            <div
+              class="relative"
+              (document:click)="cerrarMenuFuera($event, cuenta.accountId)"
+              (keydown.escape)="cerrarMenuEscape()"
+              tabindex="0"
+            >
+              <button
+                (click)="toggleMenu(cuenta.accountId)"
+                class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="button"
+                [attr.aria-expanded]="menuAbierto() === cuenta.accountId"
+                aria-label="Mostrar opciones"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="12" cy="5" r="1.5" />
+                  <circle cx="12" cy="12" r="1.5" />
+                  <circle cx="12" cy="19" r="1.5" />
+                </svg>
+              </button>
+
+              <!-- Menú -->
+              <div
+                *ngIf="menuAbierto() === cuenta.accountId"
+                class="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md z-10"
+                role="menu"
+              >
+                <button
+                  (click)="abrirModalEditar(cuenta)"
+                  class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                  role="menuitem"
+                >
+                  ✏️ Editar
+                </button>
+                <button
+                  (click)="confirmarEliminar(cuenta)"
+                  class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
+                  role="menuitem"
+                >
+                  🗑️ Eliminar
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Agregar / Editar -->
+  <div
+    *ngIf="mostrarModalAgregar() || mostrarModalEditar()"
+    class="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center"
+    role="dialog"
+    aria-modal="true"
+    (click)="cerrarModal()"
+    (keydown.escape)="cerrarModal()"
+    tabindex="0"
+  >
+    <div
+      class="bg-white w-full max-w-2xl p-6 rounded-lg shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 class="text-xl font-semibold mb-4 text-center">
+        {{ mostrarModalAgregar() ? "Agregar Cuenta" : "Actualizar Cuenta" }}
+      </h3>
+
+      <form
+        [formGroup]="form"
+        (ngSubmit)="mostrarModalAgregar() ? crearCuenta() : actualizarCuenta()"
+        class="grid grid-cols-1 md:grid-cols-2 gap-4"
+        novalidate
+      >
+        <div>
+          <label class="block text-sm font-medium" for="name">Nombre</label>
+          <input
+            id="name"
+            formControlName="name"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('name')?.invalid && form.get('name')?.touched
+            "
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium" for="lastname"
+            >Apellido</label
+          >
+          <input
+            id="lastname"
+            formControlName="lastname"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('lastname')?.invalid && form.get('lastname')?.touched
+            "
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium" for="dni">DNI</label>
+          <input
+            id="dni"
+            formControlName="dni"
+            maxlength="10"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('dni')?.invalid && form.get('dni')?.touched
+            "
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium" for="email"
+            >Correo electrónico</label
+          >
+          <input
+            id="email"
+            formControlName="email"
+            type="email"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('email')?.invalid && form.get('email')?.touched
+            "
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium" for="phoneNumber"
+            >Teléfono</label
+          >
+          <input
+            id="phoneNumber"
+            formControlName="phoneNumber"
+            maxlength="10"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('phoneNumber')?.invalid &&
+              form.get('phoneNumber')?.touched
+            "
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium" for="address"
+            >Dirección</label
+          >
+          <input
+            id="address"
+            formControlName="address"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('address')?.invalid && form.get('address')?.touched
+            "
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium" for="meterNumber"
+            >N° Medidor</label
+          >
+          <input
+            id="meterNumber"
+            formControlName="meterNumber"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('meterNumber')?.invalid &&
+              form.get('meterNumber')?.touched
+            "
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium" for="meterMark"
+            >Marca del Medidor</label
+          >
+          <input
+            id="meterMark"
+            formControlName="meterMark"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('meterMark')?.invalid && form.get('meterMark')?.touched
+            "
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium" for="predialCode"
+            >Código Predial</label
+          >
+          <input
+            id="predialCode"
+            formControlName="predialCode"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('predialCode')?.invalid &&
+              form.get('predialCode')?.touched
+            "
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium" for="nameSector"
+            >Sector</label
+          >
+          <input
+            id="nameSector"
+            formControlName="nameSector"
+            class="form-input w-full border rounded-md p-2"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.get('nameSector')?.invalid && form.get('nameSector')?.touched
+            "
+          />
+        </div>
+
+        <div class="md:col-span-2 flex justify-between mt-4">
+          <button
+            type="button"
+            (click)="cerrarModal()"
+            class="px-4 py-2 border rounded-md text-yellow-600 border-yellow-400 hover:bg-yellow-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="form.invalid"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          >
+            {{ mostrarModalAgregar() ? "Registrar" : "Actualizar" }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Eliminar -->
+  <div
+    *ngIf="mostrarModalEliminar()"
+    class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+    (click)="cerrarModal()"
+  >
+    <div
+      class="bg-white p-6 rounded shadow-lg"
+      (click)="$event.stopPropagation()"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalEliminarTitulo"
+    >
+      <h2 id="modalEliminarTitulo" class="text-lg font-bold mb-4">
+        Confirmar eliminación
+      </h2>
+      <p>¿Está seguro que desea desactivar esta cuenta?</p>
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+          (click)="cerrarModal()"
+        >
+          Cancelar
+        </button>
+        <button
+          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          (click)="eliminarCuenta()"
+        >
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
