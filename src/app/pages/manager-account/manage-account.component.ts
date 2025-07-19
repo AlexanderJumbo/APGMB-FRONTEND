@@ -31,10 +31,12 @@ export default class ManageAccountComponent {
   mostrarModalEliminar = signal(false);
   mostrarToast = signal(false);
   toastMensaje = signal('');
+  opcionesElementosPorPagina = [5, 10, 20];
 
   cuentaSeleccionada = signal<GetAccountListResponse | null>(null);
   menuAbierto = signal<number | null>(null);
-
+  paginaActual = signal(0);
+  registrosPorPagina = signal(10);
   toastEsError = computed(() => {
     const msg = this.toastMensaje().toLowerCase();
     return msg.includes('error') || msg.includes('obligatorios');
@@ -58,10 +60,41 @@ export default class ManageAccountComponent {
     this.obtenerSectores();
     this.obtenerCuentas();
   }
+  cuentasPaginadas = computed(() => {
+    const desde = this.paginaActual() * this.registrosPorPagina();
+    const hasta = desde + this.registrosPorPagina();
+    return this.cuentas().slice(desde, hasta);
+  });
+  totalPaginas = computed(() =>
+    Math.ceil(this.cuentas().length / this.registrosPorPagina())
+  );
+  cambiarPagina(nuevaPagina: number) {
+    this.paginaActual.set(nuevaPagina);
+  }
+
+  totalPaginasArray(): number[] {
+    return Array.from({ length: this.totalPaginas() }, (_, i) => i);
+  }
+  get paginas(): number[] {
+    return Array.from({ length: this.totalPaginas() }, (_, i) => i);
+  }
+  registroInicial() {
+    return this.paginaActual() * this.registrosPorPagina() + 1;
+  }
+
+  registroFinal() {
+    const final = (this.paginaActual() + 1) * this.registrosPorPagina();
+    return Math.min(final, this.cuentas().length);
+  }
+  cambiarRegistrosPorPagina(n: number) {
+    this.registrosPorPagina.set(n);
+    this.paginaActual.set(0);
+  }
+
   obtenerSectores() {
     this.apiService.getAllSectors().subscribe({
       next: (sectores) => {
-        // Aquí asignamos directamente el arreglo de sectores completo
+
         this.sectores.set(sectores);
       },
       error: (err) => {
@@ -84,7 +117,7 @@ export default class ManageAccountComponent {
     const value = select.value;
     this.filtroSector.set(value === '' ? '' : value ?? "")
     this.obtenerCuentas();
-    // lógica para manejar el valor
+
   }
 
   crearCuenta() {
@@ -287,5 +320,6 @@ export default class ManageAccountComponent {
   cerrarMenuEscape() {
     this.menuAbierto.set(null);
   }
+
 
 }

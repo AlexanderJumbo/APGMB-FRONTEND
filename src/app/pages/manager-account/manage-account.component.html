@@ -25,6 +25,28 @@
       Agregar Cuenta
     </button>
   </div>
+  <!-- Selector de registros por página (colocado arriba) -->
+  <div
+    class="flex items-center gap-2 mb-6"
+    aria-label="Selector de cantidad de registros por página"
+  >
+    <span class="text-sm font-medium text-gray-700">Mostrar:</span>
+    <div class="flex gap-1">
+      <button
+        *ngFor="let option of opcionesElementosPorPagina"
+        (click)="cambiarRegistrosPorPagina(option)"
+        [ngClass]="
+          registrosPorPagina() === option
+            ? 'bg-indigo-600 text-white border-indigo-600'
+            : 'bg-white text-indigo-600 border border-indigo-600 hover:bg-indigo-600 hover:text-white'
+        "
+        class="px-3 py-1 rounded-full transition border text-sm"
+      >
+        {{ option }}
+      </button>
+    </div>
+    <span class="text-sm text-gray-600">registros por página</span>
+  </div>
 
   <!-- Toast -->
   <div
@@ -117,34 +139,48 @@
   </div>
 
   <!-- Tabla de cuentas -->
-  <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-    <table class="w-full text-sm text-left text-gray-500" role="table">
+  <div class="relative overflow-x-auto max-w-full shadow-md sm:rounded-lg">
+    <table
+      class="w-full min-w-[1100px] text-sm text-left text-gray-500"
+      role="table"
+    >
       <thead class="text-xs text-gray-700 uppercase bg-gray-100">
         <tr>
-          <th class="px-6 py-3">#</th>
-          <th class="px-6 py-3">ID Cuenta</th>
-          <th class="px-6 py-3">Nombre</th>
-          <th class="px-6 py-3">Apellido</th>
-          <th class="px-6 py-3">DNI</th>
-          <th class="px-6 py-3">Correo</th>
-          <th class="px-6 py-3">Teléfono</th>
-          <th class="px-6 py-3">Dirección</th>
-          <th class="px-6 py-3">Sector</th>
-          <th class="px-6 py-3">N° Medidor</th>
-          <th class="px-6 py-3">Marca del Medidor</th>
-          <th class="px-6 py-3">Código Predial</th>
-          <th class="px-6 py-3">Fecha Registro</th>
-          <th class="px-6 py-3">Estado</th>
-          <th class="px-6 py-3 text-center">Acciones</th>
+          <th
+            scope="col"
+            class="sticky left-0 bg-gray-100 z-20 px-6 py-3 min-w-[40px]"
+          >
+            #
+          </th>
+          <th class="px-6 py-3 min-w-[100px]">Cuenta</th>
+          <th class="px-6 py-3 min-w-[120px]">Nombre</th>
+          <th class="px-6 py-3 min-w-[120px]">Apellido</th>
+          <th class="px-6 py-3 min-w-[100px]">DNI</th>
+          <th class="px-6 py-3 min-w-[180px]">Correo</th>
+          <th class="px-6 py-3 min-w-[120px]">Teléfono</th>
+          <th class="px-6 py-3 min-w-[150px]">Dirección</th>
+          <th class="px-6 py-3 min-w-[120px]">Sector</th>
+          <th class="px-6 py-3 min-w-[100px]">N° Medidor</th>
+          <th class="px-6 py-3 min-w-[140px]">Marca del Medidor</th>
+          <th class="px-6 py-3 min-w-[140px]">Código Predial</th>
+          <th class="px-6 py-3 min-w-[140px]">Fecha Registro</th>
+          <th class="px-6 py-3 min-w-[100px]">Estado</th>
+          <th class="px-6 py-3 min-w-[120px] text-center">Acciones</th>
         </tr>
       </thead>
       <tbody>
         <tr
-          *ngFor="let cuenta of cuentas(); let i = index; trackBy: trackById"
+          *ngFor="
+            let cuenta of cuentasPaginadas();
+            let i = index;
+            trackBy: trackById
+          "
           class="border-b hover:bg-gray-50"
           [ngClass]="cuenta.active ? 'bg-white' : 'bg-red-50'"
         >
-          <td class="px-6 py-4">{{ i + 1 }}</td>
+          <td class="sticky left-0 bg-white z-10 px-6 py-4 whitespace-nowrap">
+            {{ i + 1 }}
+          </td>
           <td class="px-6 py-4">{{ cuenta.accountId }}</td>
           <td class="px-6 py-4">{{ cuenta.name }}</td>
           <td class="px-6 py-4">{{ cuenta.lastname }}</td>
@@ -205,8 +241,8 @@
               {{ cuenta.active ? "Activado" : "Desactivado" }}
             </span>
           </td>
-          <!-- Acciones -->
           <td class="px-6 py-4 text-center relative">
+            <!-- aquí va tu menú de acciones sin cambios -->
             <div
               class="relative"
               (document:click)="cerrarMenuFuera($event, cuenta.accountId)"
@@ -259,6 +295,47 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- Paginación moderna -->
+  <div class="flex justify-center mt-6" *ngIf="totalPaginas() > 1">
+    <div class="flex space-x-1">
+      <!-- Botón anterior -->
+      <button
+        (click)="paginaActual() > 0 && cambiarPagina(paginaActual() - 1)"
+        [disabled]="paginaActual() === 0"
+        class="rounded-full border border-indigo-600 py-2 px-3 text-sm text-indigo-600 hover:text-white hover:bg-indigo-600 focus:bg-indigo-600 focus:text-white active:bg-indigo-600 active:text-white disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-lg"
+      >
+        Anterior
+      </button>
+
+      <!-- Botones numéricos -->
+      <ng-container *ngFor="let pagina of paginas; let i = index">
+        <button
+          (click)="cambiarPagina(i)"
+          class="min-w-9 rounded-full py-2 px-3.5 text-sm border transition-all shadow-md ml-1"
+          [ngClass]="
+            i === paginaActual()
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white'
+          "
+        >
+          {{ i + 1 }}
+        </button>
+      </ng-container>
+
+      <!-- Botón siguiente -->
+      <button
+        (click)="
+          paginaActual() < totalPaginas() - 1 &&
+            cambiarPagina(paginaActual() + 1)
+        "
+        [disabled]="paginaActual() === totalPaginas() - 1"
+        class="rounded-full border border-indigo-600 py-2 px-3 text-sm text-indigo-600 hover:text-white hover:bg-indigo-600 focus:bg-indigo-600 focus:text-white active:bg-indigo-600 active:text-white disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-lg ml-1"
+      >
+        Siguiente
+      </button>
+    </div>
   </div>
 
   <!-- Modal Agregar / Editar -->

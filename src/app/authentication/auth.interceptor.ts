@@ -1,33 +1,45 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { ApiService } from '../services/api.service';
+import { Router } from '@angular/router';
+import { ToastService } from '../services/toast.service'; // Asegúrate de la ruta
+import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  // Ignorar rutas públicas que no requieren token
+  const _apiService = inject(ApiService);
+  const _router = inject(Router);
+  const _toast = inject(ToastService);
+
   const publicEndpoints = [
     '/auth/authenticate',
     '/auth/register',
     '/auth/validateEmail',
   ];
 
-  // Si la URL contiene alguna ruta pública, no agregar token
   if (publicEndpoints.some((url) => req.url.includes(url))) {
     return next(req);
   }
 
-  // Obtener token del localStorage
   const token = localStorage.getItem('token');
 
-  // Si hay token, agregar header Authorization
+  let clonedRequest = req;
   if (token) {
-    const clonedRequest = req.clone({
+    clonedRequest = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`,
       },
     });
-    return next(clonedRequest);
   }
 
-  // Si no hay token, enviar petición sin modificar
-  return next(req);
-
-
+  return next(clonedRequest).pipe(
+    catchError((error) => {
+      if (error.status === 401) {
+        _toast.show('Tu sesión ha expirado. Por favor inicia sesión nuevamente.', 'warning');
+        _apiService.clearSession();
+        _router.navigate(['/login']);
+      }
+      return throwError(() => error);
+    })
+  );
 };
