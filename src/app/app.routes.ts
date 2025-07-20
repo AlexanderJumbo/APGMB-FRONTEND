@@ -33,6 +33,7 @@ export const routes: Routes = [
           import('./pages/manager-user/manage-user.component').then(
             (m) => m.default
           ),
+        canActivate: [authGuard]
       },
       {
         path: 'gestionar-clientes',
@@ -40,6 +41,7 @@ export const routes: Routes = [
           import('./pages/manager-client/manage-client.component').then(
             (m) => m.default
           ),
+        canActivate: [authGuard]
       },
       {
         path: 'reporte-lectura',
@@ -47,6 +49,7 @@ export const routes: Routes = [
           import('./pages/reading-report/reading-report.component').then(
             (m) => m.default
           ),
+        canActivate: [authGuard]
       },
       {
         path: 'gestionar-medidor',
@@ -54,6 +57,7 @@ export const routes: Routes = [
           import(
             './pages/manager-water-meter/manage-water-meter.component'
           ).then((m) => m.default),
+        canActivate: [authGuard]
       },
       {
         path: 'gestionar-cuentas',
@@ -61,6 +65,7 @@ export const routes: Routes = [
           import('./pages/manager-account/manage-account.component').then(
             (m) => m.default
           ),
+        canActivate: [authGuard]
       },
       {
         path: 'historico',
@@ -68,6 +73,7 @@ export const routes: Routes = [
           import('./pages/historical/historical.component').then(
             (m) => m.default
           ),
+        canActivate: [authGuard]
       },
 
 

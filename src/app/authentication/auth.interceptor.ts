@@ -34,6 +34,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(clonedRequest).pipe(
     catchError((error) => {
+      console.log("🚀 ~ catchError ~ error:", error)
       if (error.status === 401) {
         _toast.show('Tu sesión ha expirado. Por favor inicia sesión nuevamente.', 'warning');
         _apiService.clearSession();

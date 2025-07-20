@@ -62,6 +62,10 @@ export class ApiService {
     );
   }
 
+  validateToken(token: string): Observable<Boolean> {
+    return this.http.get<Boolean>(`${this.backendUrl}/api/auth/validate-token?jwt=${this.tokenSignal()}`)
+  }
+
   // Establecer token, usuario y rol tras login exitoso
   setSession(jwt: string, userId: string, role: string) {
     this.tokenSignal.set(jwt);

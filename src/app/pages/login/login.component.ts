@@ -48,7 +48,7 @@ export default class LoginPage {
             // Guarda sesión solo si es ADMINISTRATOR
             this.apiService.setSession(jwt, userId, role);
             this.toast.success('Inicio de sesión exitoso');
-            this.router.navigate(['/gestionar-usuario']);
+            this.router.navigate(['/historico']);
           } else {
             // No guarda sesión, no redirige
             this.toast.error(
