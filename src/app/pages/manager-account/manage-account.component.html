@@ -49,23 +49,28 @@
   </div>
 
   <!-- Toast -->
+  <!-- Toast -->
   <div
     *ngIf="mostrarToast()"
     class="fixed top-4 right-4 px-4 py-2 rounded shadow-lg z-50 flex items-center gap-2"
     [ngClass]="{
-      'bg-green-500 text-white': !toastEsError(),
-      'bg-red-500 text-white': toastEsError()
+      'bg-green-100 text-green-800': toastTipo() === 'exito',
+      'bg-red-100 text-red-800': toastTipo() === 'error',
+      'bg-red-100 text-red-800': toastTipo() === 'advertencia'
     }"
     role="alert"
     aria-live="assertive"
   >
-    <ng-container *ngIf="!toastEsError(); else errorIcon">
+    <ng-container [ngSwitch]="toastTipo()">
+      <!-- Ícono Éxito -->
       <svg
+        *ngSwitchCase="'exito'"
         class="w-5 h-5 animate-bounce"
         fill="none"
         stroke="currentColor"
         stroke-width="2"
         viewBox="0 0 24 24"
+        aria-hidden="true"
       >
         <path
           stroke-linecap="round"
@@ -73,14 +78,16 @@
           d="M5 13l4 4L19 7"
         />
       </svg>
-    </ng-container>
-    <ng-template #errorIcon>
+
+      <!-- Ícono Error -->
       <svg
+        *ngSwitchCase="'error'"
         class="w-5 h-5 animate-pulse"
         fill="none"
         stroke="currentColor"
         stroke-width="2"
         viewBox="0 0 24 24"
+        aria-hidden="true"
       >
         <path
           stroke-linecap="round"
@@ -88,9 +95,30 @@
           d="M6 18L18 6M6 6l12 12"
         />
       </svg>
-    </ng-template>
-    {{ toastMensaje() }}
+
+      <!-- Ícono Advertencia -->
+      <svg
+        *ngSwitchCase="'advertencia'"
+        class="w-5 h-5 animate-pulse"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 9v2m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
+        />
+      </svg>
+    </ng-container>
+
+    <span class="font-medium">
+      {{ toastMensaje() }}
+    </span>
   </div>
+
   <div
     class="flex flex-col md:flex-row md:items-center md:gap-6 mb-4"
     role="search"
@@ -498,19 +526,35 @@
             "
           />
         </div>
-        <div>
-          <label class="block text-sm font-medium" for="nameSector"
+
+        <div class="mb-4 w-full">
+          <label
+            for="nameSector"
+            class="block text-sm font-medium text-gray-700 mb-1"
             >Sector</label
           >
-          <input
+          <select
             id="nameSector"
             formControlName="nameSector"
-            class="form-input w-full border rounded-md p-2"
-            aria-required="true"
-            [attr.aria-invalid]="
+            [disabled]="form.get('nameSector')?.disabled ?? false"
+            class="w-full h-[42px] px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="" disabled selected>Seleccione un sector</option>
+            <option
+              *ngFor="let sector of sectores()"
+              [value]="sector.nameSector"
+            >
+              {{ sector.nameSector }}
+            </option>
+          </select>
+          <div
+            class="text-sm text-red-600 mt-1"
+            *ngIf="
               form.get('nameSector')?.invalid && form.get('nameSector')?.touched
             "
-          />
+          >
+            Debe seleccionar un sector
+          </div>
         </div>
 
         <div class="md:col-span-2 flex justify-between mt-4">

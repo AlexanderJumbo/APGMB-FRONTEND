@@ -31,6 +31,7 @@ export default class ManageAccountComponent {
   mostrarModalEliminar = signal(false);
   mostrarToast = signal(false);
   toastMensaje = signal('');
+  toastTipo = signal<'exito' | 'error' | 'advertencia'>('exito');
   opcionesElementosPorPagina = [5, 10, 20];
 
   cuentaSeleccionada = signal<GetAccountListResponse | null>(null);
@@ -52,7 +53,7 @@ export default class ManageAccountComponent {
     meterNumber: ['', Validators.required],
     meterMark: ['', Validators.required],
     predialCode: ['', Validators.required],
-    nameSector: ['', Validators.required],
+    nameSector: this.fb.control('', Validators.required),
   });
 
 
@@ -165,7 +166,7 @@ export default class ManageAccountComponent {
     this.apiService.getAllAccounts(params).subscribe({
       next: (res) => {
         this.cuentas.set(res);
-        this.mostrarToastConMensaje('Cuentas obtenidas correctamente');
+
       },
       error: (err) => {
         console.error('Error al obtener cuentas', err);
@@ -178,11 +179,17 @@ export default class ManageAccountComponent {
 
 
   abrirModalAgregar() {
+
     this.cuentaSeleccionada.set(null);
     this.form.reset();
     this.form.get('nameSector')?.enable();
     this.mostrarModalAgregar.set(true);
+
     this.cerrarMenu();
+    this.form.reset({
+      nameSector: '',
+
+    });
   }
 
   abrirModalEditar(cuenta: GetAccountListResponse) {
@@ -259,21 +266,25 @@ export default class ManageAccountComponent {
       },
       error: (err) => {
         console.error('Error al desactivar cuenta:', err);
-        this.mostrarToastConMensaje('Error al desactivar cuenta');
+        this.mostrarToastConMensaje('Cuenta desactivada exitosamente', 'error');
       },
     });
   }
 
   confirmarEliminar(cuenta: GetAccountListResponse) {
     this.cuentaSeleccionada.set(cuenta);
-    this.mostrarModalEliminar.set(true); // ✅ muestra modal eliminar
+    this.mostrarModalEliminar.set(true);
     this.cerrarMenu();
   }
 
 
 
-  mostrarToastConMensaje(mensaje: string) {
+  mostrarToastConMensaje(
+    mensaje: string,
+    tipo: 'exito' | 'error' | 'advertencia' = 'exito'
+  ) {
     this.toastMensaje.set(mensaje);
+    this.toastTipo.set(tipo);
     this.mostrarToast.set(true);
     setTimeout(() => this.mostrarToast.set(false), 3000);
   }
